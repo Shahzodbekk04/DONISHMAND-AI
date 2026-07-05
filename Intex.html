@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏛 Donishmand AI — Tarixdan Ilhomlangan Dono Maslahatlar</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React & ReactDOM CDN -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <!-- Babel compiler to run JSX in browser directly -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
+        
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        .font-serif {
+            font-family: 'Playfair Display', serif;
+        }
+        @keyframes flicker {
+            0%, 100% { transform: scaleY(1) scaleX(1); opacity: 0.9; }
+            50% { transform: scaleY(1.15) scaleX(0.95); opacity: 1; filter: blur(0.5px); }
+        }
+        .animate-flicker {
+            animation: flicker 0.15s infinite alternate;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.2);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(245, 158, 11, 0.3);
+            border-radius: 99px;
+        }
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #print-area, #print-area * {
+                visibility: visible;
+            }
+            #print-area {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                background: white !important;
+                color: black !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-[#08070d] text-gray-200 min-h-screen relative overflow-x-hidden selection:bg-amber-500/30 selection:text-amber-200">
+
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        const KUN_DONOLIKLARI = [
+            { matn: "Kuch — adolatdadir. Agar adolat yo'qolsa, davlat ham qulaydi.", muallif: "Amir Temur" },
+            { matn: "Tilga ixtiyorsiz — elga e'tiborsiz. Har bir so'zni o'ylab, taroziga solib gapir.", muallif: "Alisher Navoiy" },
+            { matn: "Ruh kasalligi tana kasalligidan og'irroqdir. Sog'lom va osoyishta fikr — har qanday dardingizga shifodir.", muallif: "Ibn Sino" },
+            { matn: "Siz qidirayotgan va intilayotgan narsa aynan sizni qidirmoqda. Umidni aslo uzmang, yo'l ochiladi.", muallif: "Jaloliddin Rumiy" },
+            { matn: "Inson odobi, ilmi va go'zal xulqi bilan ulug'dir, uning boyligi va kelib chiqishi bilan emas.", muallif: "Al-Xorazmiy" },
+            { matn: "Kelajakni yaxshilik tomonga o'zgartirishni xohlasang, hozirgi daqiqadan unumli foydan.", muallif: "Al-Forobiy" },
+            { matn: "Toleingiz baland bo'lsa, mag'rur ketmang, tushkunlik kelganda esa tiz cho'kmang.", muallif: "Zahiriddin Muhammad Bobur" }
+        ];
+
+        const PERSONAJLAR = [
+            { id: 'sohibqiron', nom: 'Sohibqiron uslubi', belgi: '⚔️', tavsif: 'Amir Temur kabi qat’iyatli, harbiy-strategik, irodali va qat’iy yondashuv.' },
+            { id: 'shoir', nom: 'Shoir uslubi', belgi: '📚', tavsif: 'Alisher Navoiy kabi falsafiy, g’azal va baytlarga boy, latif badiiy so’zlar.' },
+            { id: 'olim', nom: 'Olim uslubi', belgi: '🧠', tavsif: 'Ibn Sino kabi ilmiy, mantiqiy va inson tabiatiga mos tibbiy-falsafiy tavsiyalar.' },
+            { id: 'imperator', nom: 'Imperator uslubi', belgi: '👑', tavsif: 'Zahiriddin Muhammad Bobur kabi chuqur, samimiy, olijanob va shaxsiy kechinmalarga boy.' },
+            { id: 'ixtirochi', nom: 'Ixtirochi uslubi', belgi: '🎨', tavsif: 'Al-Xorazmiy kabi aniq, matematik, muammoni algoritmlar bilan yechuvchi.' },
+            { id: 'sayohatchi', nom: 'Sayohatchi uslubi', belgi: '🌍', tavsif: 'Ibn Battuta kabi dunyo ko’rgan, hikoya va sarguzashtlarga asoslangan qiziqarli uslub.' },
+            { id: 'faylasuf', nom: 'Faylasuf uslubi', belgi: '📖', tavsif: 'Al-Forobiy kabi teran fikrli, borliq va jamiyat qonuniyatlariga tayanuvchi.' },
+            { id: 'ustoz', nom: 'Ustoz uslubi', belgi: '⭐', tavsif: 'Jaloliddin Rumiy kabi tasavvufiy, qalbni davolovchi, iliq va mehrga to’la o’gitlar.' }
+        ];
+
+        const KAYFIYATLAR = [
+            { id: 'yumshoq', nom: '🙂 Yumshoq', rang: 'border-emerald-500/40 text-emerald-400 bg-emerald-500/5' },
+            { id: 'hazil', nom: '😂 Hazil', rang: 'border-yellow-500/40 text-yellow-400 bg-yellow-500/5' },
+            { id: 'qattiq', nom: '🔥 Juda qattiq', rang: 'border-red-500/40 text-red-400 bg-red-500/5' },
+            { id: 'motivatsion', nom: '💪 Motivatsion', rang: 'border-blue-500/40 text-blue-400 bg-blue-500/5' },
+            { id: 'aqlli', nom: '🤓 Aqlli', rang: 'border-purple-500/40 text-purple-400 bg-purple-500/5' },
+            { id: 'kinoyali', nom: '😏 Kinoyali', rang: 'border-amber-500/40 text-amber-400 bg-amber-500/5' }
+        ];
+
+        const REJIMLAR = [
+            { id: 'kulgili', nom: '🤣 Juda kulgili' },
+            { id: 'tanqid', nom: '🔥 Juda qattiq tanqid' },
+            { id: 'maslahat', nom: '❤️ Yumshoq maslahat' },
+            { id: 'donolik', nom: '🧠 Donolik' },
+            { id: 'teatr', nom: '🎭 Teatr uslubi' },
+            { id: 'kino', nom: '🎬 Kino uslubi' },
+            { id: 'qadimiy', nom: '📜 Qadimiy uslub' }
+        ];
+
+        function DustParticles() {
+            const canvasRef = useRef(null);
+
+            useEffect(() => {
+                const canvas = canvasRef.current;
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+                let animationFrameId;
+
+                const resizeCanvas = () => {
+                    canvas.width = window.innerWidth;
+                    canvas.height = window.innerHeight;
+                };
+                resizeCanvas();
+                window.addEventListener('resize', resizeCanvas);
+
+                const particles = [];
+                const particleCount = 45;
+
+                for (let i = 0; i < particleCount; i++) {
+                    particles.push({
+                        x: Math.random() * canvas.width,
+                        y: Math.random() * canvas.height,
+                        radius: Math.random() * 2 + 0.5,
+                        speedX: Math.random() * 0.4 - 0.2,
+                        speedY: Math.random() * 0.3 - 0.5, 
+                        alpha: Math.random() * 0.6 + 0.1
+                    });
+                }
+
+                const draw = () => {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    particles.forEach((p) => {
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                        ctx.fillStyle = `rgba(245, 158, 11, ${p.alpha})`; 
+                        ctx.fill();
+
+                        p.x += p.speedX;
+                        p.y += p.speedY;
+
+                        if (p.y < 0) {
+                            p.y = canvas.height;
+                            p.x = Math.random() * canvas.width;
+                        }
+                        if (p.x < 0 || p.x > canvas.width) {
+                            p.x = Math.random() * canvas.width;
+                        }
+                    });
+                    animationFrameId = requestAnimationFrame(draw);
+                };
+
+                draw();
+
+                return () => {
+                    cancelAnimationFrame(animationFrameId);
+                    window.removeEventListener('resize', resizeCanvas);
+                };
+            }, []);
+
+            return <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none z-10" />;
+        }
+
+        function App() {
+            const [boshlangan, setBoshlangan] = useState(false);
+            const [kunDonoligi, setKunDonoligi] = useState(KUN_DONOLIKLARI[0]);
+            const [tanlanganPersonaj, setTanlanganPersonaj] = useState(PERSONAJLAR[0]);
+            const [tanlanganKayfiyat, setTanlanganKayfiyat] = useState(KAYFIYATLAR[3]);
+            const [tanlanganRejim, setTanlanganRejim] = useState(REJIMLAR[3]);
+            const [muammo, setMuammo] = useState('');
+            
+            const [yuklanmoqda, setYuklanmoqda] = useState(false);
+            const [javob, setJavob] = useState('');
+            const [jonliMatn, setJonliMatn] = useState('');
+            const [baholar, setBaholar] = useState({ jasorat: 75, intizom: 60, rivojlanish: 80, ruhiyat: 65, umid: 70 });
+            const [nusxalandi, setNusxalandi] = useState(false);
+            const [xatoXabari, setXatoXabari] = useState('');
+
+            const [ovozOynalmoqda, setOvozOynalmoqda] = useState(false);
+            const [ovozTezligi, setOvozTezligi] = useState(1.0); 
+
+            // API Settings Modal state
+            const [showSettings, setShowSettings] = useState(false);
+            const [tempApiKey, setTempApiKey] = useState('');
+            const [apiKey, setApiKey] = useState('');
+
+            useEffect(() => {
+                const randomHikmat = KUN_DONOLIKLARI[Math.floor(Math.random() * KUN_DONOLIKLARI.length)];
+                setKunDonoligi(randomHikmat);
+
+                // Load stored API key
+                const storedKey = localStorage.getItem('donishmand_gemini_api_key') || '';
+                setApiKey(storedKey);
+                setTempApiKey(storedKey);
+            }, []);
+
+            useEffect(() => {
+                if (!javob) return;
+                setJonliMatn('');
+                let i = 0;
+                const interval = setInterval(() => {
+                    if (i < javob.length) {
+                        setJonliMatn((prev) => prev + javob.charAt(i));
+                        i++;
+                    } else {
+                        clearInterval(interval);
+                    }
+                }, 12);
+                return () => clearInterval(interval);
+            }, [javob]);
+
+            const saqlashAPIKey = () => {
+                localStorage.setItem('donishmand_gemini_api_key', tempApiKey);
+                setApiKey(tempApiKey);
+                setShowSettings(false);
+            };
+
+            const simulateFallbackResponse = () => {
+                let fallbackText = "";
+                let mockBaholar = { jasorat: 80, intizom: 75, rivojlanish: 90, ruhiyat: 60, umid: 85 };
+
+                if (tanlanganPersonaj.id === 'sohibqiron') {
+                    fallbackText = `Sening g'aming va tushkunliging saltanatni boshqarish va g'alaba qozonish yo'lidagi to'siqlardan og'ir emas, do'stim! Yiqilgan kurashdan to'ymaydi, asosiysi qayta turib kurashishda. Qiyinchiliklar sening irodangni toblaydi. Men saltanatni bir kunda va osonlikcha qurmaganman. Telefonni chetga qo'y, belni mahkam bog'la va jangga kir! Jasorat sening eng katta qurolingdir!`;
+                    mockBaholar = { jasorat: 95, intizom: 85, rivojlanish: 80, ruhiyat: 70, umid: 90 };
+                } else if (tanlanganPersonaj.id === 'shoir') {
+                    fallbackText = `Ey ko'ngli xira do'stim, g'am chekma bu dunyo o'tkinchidir. Ko'z yoshlaring duryodek oqmasin, chunki har tunning ortida yorug' subh bordir. Qiyinchilik she'riyati kelajak g'azalingga go'zallik va ta'sirchanlik bag'ishlaydi. Bir lahza tin ol, o'zingni kashf et, qalbingni yorit.`;
+                    mockBaholar = { jasorat: 60, intizom: 70, rivojlanish: 85, ruhiyat: 90, umid: 95 };
+                } else if (tanlanganPersonaj.id === 'olim') {
+                    fallbackText = `Sening muammoingni tahlil qilsak, u dori bilan emas, fikr kuchi va tizimli tartib bilan davolanadigan ruxiy holatdir. Har qanday murakkab formula kabi, hayot tugunlari ham bosqichma-bosqich yechiladi. Vaqtni to'g'ri taqsimla, miyangni keraksiz xayollardan tozalab, ilmga yuzlan va yangi g'oyalarni sinab ko'r!`;
+                    mockBaholar = { jasorat: 70, intizom: 95, rivojlanish: 95, ruhiyat: 75, umid: 80 };
+                } else if (tanlanganPersonaj.id === 'imperator') {
+                    fallbackText = `Sening qalbingdagi bu iztirob meni ham anduhga soldi. Lekin unutma, taqdir zarbalari insonni yanada buyuk qiladi. Vatandan uzoqda bo'lsam ham umidimni uzmadim, sen ham aslo taslim bo'lma. O'zingga ishon, olijanob maqsadlar sari dadil qadam tashla!`;
+                    mockBaholar = { jasorat: 85, intizom: 80, rivojlanish: 88, ruhiyat: 70, umid: 85 };
+                } else if (tanlanganPersonaj.id === 'ixtirochi') {
+                    fallbackText = `Har qanday chalkash vaziyat - bu yechilishi lozim bo'lgan algebraik tenglamadir. Noma'lumlarni aniqla, xatolaringni tahlil qil va yangi tenglama tuz. Sening bugungi muvaffaqiyatsizliging kelgusi buyuk kashfiyotlar poydevoridir. Tizimli harakat qil va hisob-kitobda adashma.`;
+                    mockBaholar = { jasorat: 75, intizom: 90, rivojlanish: 98, ruhiyat: 68, umid: 85 };
+                } else if (tanlanganPersonaj.id === 'sayohatchi') {
+                    fallbackText = `Men dunyo kezib shuni angladimki, eng buyuk sayohat va sarguzasht insonning o'z qiyinchiliklarini yengishidir. Bugungi yo'ling toshloq bo'lsa, ertaga u go'zal vodiylarga olib boradi. Yo'lda davom et, to'xtab qolish eng katta xatodir!`;
+                    mockBaholar = { jasorat: 90, intizom: 70, rivojlanish: 85, ruhiyat: 80, umid: 90 };
+                } else if (tanlanganPersonaj.id === 'faylasuf') {
+                    fallbackText = `Fozil insonlar jamiyati va hayot qonuniyatlari shuni ko'rsatadiki, tushkunlik faqatgina vaqtinchalik illatdir. Fikrlaringni jilovla, ongni kengaytir va muammoni tepadan turib kuzat. Bu seni dono va kuchli qiladi. Kelajak seni kutmoqda.`;
+                    mockBaholar = { jasorat: 78, intizom: 88, rivojlanish: 90, ruhiyat: 85, umid: 80 };
+                } else {
+                    fallbackText = `Ey aziz qalb egasi, yo'lingda uchragan bu toshlar sening parvozingni to'xtata olmaydi. Shamol qanchalik qattiq bo'lsa, varrak shunchalik baland ko'tariladi. Qiyinchiliklar faqat qanotlaringni mustahkamlash uchun berilgan. Qalbingni sevgi va umidga to'ldir!`;
+                    mockBaholar = { jasorat: 80, intizom: 75, rivojlanish: 90, ruhiyat: 95, umid: 99 };
+                }
+
+                setJavob(fallbackText);
+                setBaholar(mockBaholar);
+            };
+
+            const donishmanddanSora = async () => {
+                if (!muammo.trim()) {
+                    setXatoXabari("Iltimos, avval hayotingizdagi biror muammo yoki tushkun vaziyatni yozing!");
+                    return;
+                }
+                setXatoXabari('');
+                setYuklanmoqda(true);
+                setJavob('');
+                setJonliMatn('');
+
+                if (!apiKey) {
+                    // API key is missing, notify and use mock simulation
+                    setXatoXabari("Siz Gemini API kalitini kiritmagansiz. Loyiha offlayn simulyatsiya rejimida ishlaydi. To'liq AI uchun tepadagi tishli g'ildirakchani bosing.");
+                    setTimeout(() => {
+                        simulateFallbackResponse();
+                        setYuklanmoqda(false);
+                    }, 1200);
+                    return;
+                }
+
+                const systemPrompt = `Siz "Donishmand AI" qadimiy siymolar qiyofasidagi maslahatchisiz. Foydalanuvchi muammosini tahlil qiling.
+Javob faqat O'zbek tilida, nihoyatda chiroyli, premium, ta'sirli va chuqur badiiy bo'lishi shart.
+Foydalanuvchi ma'lumotlari:
+- Muammo: "${muammo}"
+- Tanlangan personaj uslubi: "${tanlanganPersonaj.nom}" (${tanlanganPersonaj.tavsif})
+- Kayfiyat: "${tanlanganKayfiyat.nom}"
+- Qo'shimcha rejim: "${tanlanganRejim.nom}"
+
+Javobni quyidagi JSON formatida qaytaring, boshqa hech qanday ortiqcha matn, so'z, tushuntirish yoki belgi yozmang:
+{
+  "javob": "Bu yerda sizning qadimiy uslubdagi dono, hazil aralash, qisman kinoyali, lekin oxirida juda katta motivatsiya beruvchi o'zbekcha javobingiz bo'ladi.",
+  "jasorat": 10 dan 100 gacha son,
+  "intizom": 10 dan 100 gacha son,
+  "rivojlanish": 10 dan 100 gacha son,
+  "ruhiyat": 10 dan 100 gacha son,
+  "umid": 10 dan 100 gacha son
+}`;
+
+                const userQuery = `Foydalanuvchi muammosi: ${muammo}. Men ${tanlanganPersonaj.nom} uslubida, ${tanlanganKayfiyat.nom} kayfiyatda va ${tanlanganRejim.nom} rejimida yechim va maslahat istayman.`;
+
+                try {
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+
+                    const payload = {
+                        contents: [{ parts: [{ text: userQuery }] }],
+                        generationConfig: {
+                            responseMimeType: "application/json",
+                            responseSchema: {
+                                type: "OBJECT",
+                                properties: {
+                                    javob: { type: "STRING" },
+                                    jasorat: { type: "INTEGER" },
+                                    intizom: { type: "INTEGER" },
+                                    rivojlanish: { type: "INTEGER" },
+                                    ruhiyat: { type: "INTEGER" },
+                                    umid: { type: "INTEGER" }
+                                },
+                                required: ["javob", "jasorat", "intizom", "rivojlanish", "ruhiyat", "umid"]
+                            }
+                        },
+                        systemInstruction: {
+                            parts: [{ text: systemPrompt }]
+                        }
+                    };
+
+                    const res = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!res.ok) {
+                        throw new Error("API xato qaytardi (kalit xato bo'lishi mumkin).");
+                    }
+
+                    const result = await res.json();
+                    const candidate = result.candidates?.[0];
+
+                    if (candidate && candidate.content?.parts?.[0]?.text) {
+                        const parsed = JSON.parse(candidate.content.parts[0].text);
+                        setJavob(parsed.javob);
+                        setBaholar({
+                            jasorat: parsed.jasorat || 60,
+                            intizom: parsed.intizom || 60,
+                            rivojlanish: parsed.rivojlanish || 60,
+                            ruhiyat: parsed.ruhiyat || 60,
+                            umid: parsed.umid || 60
+                        });
+                    } else {
+                        throw new Error("Bo'sh javob.");
+                    }
+                } catch (error) {
+                    console.error("API Xatolik:", error);
+                    setXatoXabari("API ulanishida xatolik yuz berdi. Offlayn simulyatsiyadan foydalanildi!");
+                    simulateFallbackResponse();
+                } finally {
+                    setYuklanmoqda(false);
+                }
+            };
+
+            const boshqarOvoz = (amal) => {
+                if (!('speechSynthesis' in window)) {
+                    setXatoXabari("Sizning brauzeringiz ovozli o'qishni qo'llab-quvvatlamaydi!");
+                    return;
+                }
+
+                if (amal === 'tinglash') {
+                    window.speechSynthesis.cancel();
+                    const speech = new SpeechSynthesisUtterance(javob);
+                    speech.lang = 'tr-TR'; // Good phonetic approximation for Uzbek speech
+                    speech.rate = ovozTezligi;
+                    
+                    speech.onend = () => {
+                        setOvozOynalmoqda(false);
+                    };
+                    
+                    window.speechSynthesis.speak(speech);
+                    setOvozOynalmoqda(true);
+                } else if (amal === 'toxtatish') {
+                    window.speechSynthesis.pause();
+                    setOvozOynalmoqda(false);
+                } else if (amal === 'ochirish') {
+                    window.speechSynthesis.cancel();
+                    setOvozOynalmoqda(false);
+                }
+            };
+
+            const nusxaOlish = () => {
+                navigator.clipboard.writeText(`🏛 Donishmand AI Maslahati\n\nPersonaj: ${tanlanganPersonaj.nom}\nKayfiyat: ${tanlanganKayfiyat.nom}\n\n"${javob}"\n\n© Donishmand AI platformasi`);
+                setNusxalandi(true);
+                setTimeout(() => setNusxalandi(false), 2000);
+            };
+
+            const yuklashPDF = () => {
+                window.print();
+            };
+
+            return (
+                <div className="relative z-20 min-h-screen flex flex-col justify-between">
+                    
+                    {/* Background decorations */}
+                    <div className="absolute top-[-15%] left-[-10%] w-[500px] h-[500px] rounded-full bg-purple-900/10 blur-[120px] pointer-events-none -z-10" />
+                    <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] rounded-full bg-amber-950/15 blur-[150px] pointer-events-none -z-10" />
+                    <DustParticles />
+
+                    {/* Navigation Header */}
+                    <header className="max-w-7xl mx-auto w-full px-4 py-6 flex justify-between items-center border-b border-amber-900/20">
+                        <div className="flex items-center gap-3">
+                            <span className="text-3xl filter drop-shadow-[0_0_10px_rgba(245,158,11,0.5)]">🏛</span>
+                            <div>
+                                <h1 className="text-2xl font-black bg-gradient-to-r from-amber-400 via-yellow-200 to-amber-600 bg-clip-text text-transparent tracking-wider">
+                                    DONISHMAND AI
+                                </h1>
+                                <p className="text-[10px] text-amber-500/70 uppercase tracking-widest font-semibold">
+                                    Buyuk siymolardan ilhomlangan dono maslahatlar
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div className="flex items-center gap-3">
+                            {/* API Settings Gear Button */}
+                            <button 
+                                onClick={() => setShowSettings(true)}
+                                className="p-2.5 rounded-full bg-stone-900/80 hover:bg-stone-850 border border-stone-800 hover:border-amber-500/30 transition-all text-stone-400 hover:text-amber-400 group"
+                                title="API Kalit Sozlamalari"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 group-hover:rotate-45 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                            </button>
+                        </div>
+                    </header>
+
+                    {/* API Settings Modal */}
+                    {showSettings && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-4 animate-fade-in">
+                            <div className="w-full max-w-md p-6 rounded-2xl border border-amber-900/30 bg-[#0d0c15] shadow-2xl space-y-4">
+                                <h3 className="text-lg font-bold text-amber-400 flex items-center gap-2">
+                                    <span>⚙️</span> GEMINI API KALITI SOZLAMALARI
+                                </h3>
+                                <p className="text-xs text-stone-400 leading-relaxed">
+                                    Loyiha Gemini AI yordamida haqiqiy vaqt rejimida javob berishi uchun o'z API kalitingizni kiriting. Kalitingiz maxfiy bo'lib, faqat sizning brauzeringiz xotirasida saqlanadi.
+                                </p>
+                                <div className="space-y-2">
+                                    <label className="text-[11px] font-bold text-stone-500 uppercase tracking-wider">API Kaliti</label>
+                                    <input 
+                                        type="password"
+                                        value={tempApiKey}
+                                        onChange={(e) => setTempApiKey(e.target.value)}
+                                        placeholder="AIzaSy..."
+                                        className="w-full p-3 bg-stone-950/80 border border-stone-800 rounded-xl focus:border-amber-500/50 focus:outline-none text-sm text-stone-200"
+                                    />
+                                </div>
+                                <div className="flex gap-2 pt-2">
+                                    <button 
+                                        onClick={saqlashAPIKey}
+                                        className="flex-1 py-2.5 bg-gradient-to-r from-amber-600 to-amber-500 rounded-xl text-black font-bold text-xs tracking-wider hover:opacity-90 transition-opacity"
+                                    >
+                                        SAQLASH
+                                    </button>
+                                    <button 
+                                        onClick={() => setShowSettings(false)}
+                                        className="px-4 py-2.5 bg-stone-900 border border-stone-800 rounded-xl text-stone-400 text-xs hover:text-white transition-colors"
+                                    >
+                                        YOPISH
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Global Notification Banner */}
+                    {xatoXabari && (
+                        <div className="max-w-3xl mx-auto w-full mt-4 px-4">
+                            <div className="p-4 bg-amber-950/40 border border-amber-500/20 rounded-xl flex justify-between items-start gap-3 backdrop-blur-md">
+                                <div className="flex gap-2">
+                                    <span className="text-amber-500 shrink-0 mt-0.5">⚠️</span>
+                                    <div>
+                                        <p className="text-xs font-semibold text-amber-200 uppercase tracking-wider">Eslatma / Ogohlantirish</p>
+                                        <p className="text-sm text-stone-300/90 mt-1">{xatoXabari}</p>
+                                    </div>
+                                </div>
+                                <button onClick={() => setXatoXabari('')} className="text-amber-500/50 hover:text-amber-300 transition-colors p-1">
+                                    ✕
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Main Content Workspace */}
+                    <main className="max-w-7xl mx-auto w-full px-4 py-8 flex-1 flex flex-col justify-between">
+                        
+                        {!boshlangan ? (
+                            <div className="flex-1 flex flex-col items-center justify-center text-center max-w-4xl mx-auto my-8 relative">
+                                <div className="absolute inset-0 bg-gradient-to-r from-purple-900/5 to-amber-900/5 rounded-3xl blur-3xl -z-10" />
+                                
+                                {/* Candle Flame Decoration */}
+                                <div className="mb-8 relative flex flex-col items-center justify-end h-32 w-20">
+                                    <div className="w-8 h-20 bg-gradient-to-t from-[#2d1b0d] via-[#a3683a] to-[#d9a05b] rounded-md relative shadow-2xl border-t border-amber-300/30">
+                                        <div className="absolute top-2 left-1 w-1.5 h-6 bg-[#d9a05b] rounded-full opacity-80" />
+                                        <div className="absolute top-4 right-1.5 w-1 h-8 bg-[#d9a05b] rounded-full opacity-70" />
+                                        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full w-0.5 h-5 bg-stone-900" />
+                                    </div>
+                                    <div className="absolute bottom-[80px] w-6 h-10 bg-gradient-to-t from-orange-600 via-amber-400 to-yellow-100 rounded-full animate-flicker filter blur-[1px] transform origin-bottom flex items-center justify-center shadow-[0_0_20px_rgba(245,158,11,0.8)]">
+                                        <div className="w-2.5 h-5 bg-yellow-200 rounded-full opacity-70 animate-ping" />
+                                    </div>
+                                    <p className="text-[10px] text-amber-500/50 tracking-widest mt-3 font-semibold">ILHOM SHAMI</p>
+                                </div>
+
+                                <h2 className="text-4xl md:text-6xl font-black mb-6 tracking-wide leading-tight">
+                                    Muammongizga <br />
+                                    <span className="bg-gradient-to-r from-amber-400 via-yellow-100 to-amber-500 bg-clip-text text-transparent">
+                                        Tarixdan Ilhomlangan
+                                    </span> Yechimlar
+                                </h2>
+
+                                <p className="text-base md:text-lg text-stone-400 mb-8 max-w-2xl leading-relaxed font-light">
+                                    Hayotingizdagi chigal vaziyatlarni yozing. Tarixiy siymolar va olimlar uslubidagi AI sizga ham dono, ham qiziqarli va foydali maslahat beradi.
+                                </p>
+
+                                <button
+                                    onClick={() => setBoshlangan(true)}
+                                    className="group relative px-10 py-5 bg-gradient-to-r from-amber-600 to-amber-500 rounded-full text-black font-bold text-lg tracking-wider hover:from-amber-500 hover:to-yellow-400 transition-all duration-300 shadow-[0_0_30px_rgba(217,119,6,0.35)] active:scale-95 flex items-center gap-3 overflow-hidden"
+                                >
+                                    <span>🚀 SUHBATNI BOSHLASH</span>
+                                    <span>➔</span>
+                                </button>
+
+                                {/* Day Wisdom banner */}
+                                <div className="mt-14 w-full max-w-xl p-6 rounded-2xl border border-amber-900/30 bg-amber-950/10 backdrop-blur-md relative overflow-hidden group hover:border-amber-500/30 transition-all duration-300">
+                                    <div className="absolute -top-10 -right-10 w-24 h-24 bg-amber-500/5 rounded-full blur-xl pointer-events-none" />
+                                    <div className="flex items-center gap-2 text-amber-400 text-xs tracking-wider uppercase mb-3 font-semibold">
+                                        <span>📖 KUN HIKMATI</span>
+                                    </div>
+                                    <p className="italic text-stone-300 text-base mb-3 font-serif leading-relaxed">
+                                        "{kunDonoligi.matn}"
+                                    </p>
+                                    <p className="text-amber-500/80 text-xs text-right font-medium">
+                                        — {kunDonoligi.muallif}
+                                    </p>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 my-4">
+                                
+                                {/* Controls & Form (Left side) */}
+                                <div className="lg:col-span-5 space-y-6">
+                                    
+                                    {/* Issue Textarea */}
+                                    <div className="p-6 rounded-2xl border border-amber-900/20 bg-[#100d1f]/40 backdrop-blur-lg shadow-xl relative">
+                                        <div className="absolute top-4 right-4 flex items-center gap-1.5 px-2 py-1 rounded bg-amber-500/10 border border-amber-500/20 text-[10px] text-amber-400 uppercase font-bold">
+                                            <span>🔥 Dono Yondashuv</span>
+                                        </div>
+                                        <h3 className="text-base font-bold text-amber-400 mb-3 tracking-wide flex items-center gap-2">
+                                            <span>✍️</span> MUAMMONGIZNI TUSHUNTIRING
+                                        </h3>
+                                        <textarea
+                                            value={muammo}
+                                            onChange={(e) => setMuammo(e.target.value)}
+                                            placeholder="Masalan: Imtihondan yiqildim, tushkunlikdaman... yoki Pulim yo'q, nima qilsam bo'ladi?..."
+                                            className="w-full h-32 p-4 bg-stone-950/70 border border-stone-800 rounded-xl focus:border-amber-500/50 focus:outline-none focus:ring-1 focus:ring-amber-500/30 text-stone-200 placeholder-stone-600 text-sm resize-none transition-all"
+                                        />
+                                    </div>
+
+                                    {/* Persona Cards Grid */}
+                                    <div className="p-6 rounded-2xl border border-amber-900/20 bg-[#100d1f]/40 backdrop-blur-lg shadow-xl">
+                                        <h3 className="text-base font-bold text-amber-400 mb-3 tracking-wide flex items-center gap-2">
+                                            <span>🎭</span> DONISHMAND USLUBINI TANLANG
+                                        </h3>
+                                        <div className="grid grid-cols-2 gap-3 max-h-72 overflow-y-auto pr-1 custom-scrollbar">
+                                            {PERSONAJLAR.map((p) => (
+                                                <button
+                                                    key={p.id}
+                                                    onClick={() => setTanlanganPersonaj(p)}
+                                                    className={`p-3 rounded-xl border text-left transition-all duration-300 group relative overflow-hidden ${
+                                                        tanlanganPersonaj.id === p.id 
+                                                            ? 'border-amber-500 bg-amber-950/30 text-white shadow-[0_0_15px_rgba(245,158,11,0.15)]' 
+                                                            : 'border-stone-800/60 bg-stone-950/40 hover:border-stone-700 hover:bg-stone-950/70 text-stone-400'
+                                                    }`}
+                                                >
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <span className="text-lg">{p.belgi}</span>
+                                                        <span className="font-bold text-xs tracking-wider">{p.nom}</span>
+                                                    </div>
+                                                    <p className="text-[10px] text-stone-500 group-hover:text-stone-300 transition-colors line-clamp-2 leading-relaxed">
+                                                        {p.tavsif}
+                                                    </p>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Mood & Modes selection */}
+                                    <div className="p-6 rounded-2xl border border-amber-900/20 bg-[#100d1f]/40 backdrop-blur-lg shadow-xl space-y-5">
+                                        <div>
+                                            <h3 className="text-xs font-bold text-amber-400/90 uppercase tracking-widest mb-3">
+                                                🙂 MASLAHAT KAYFIYATI
+                                            </h3>
+                                            <div className="flex flex-wrap gap-2">
+                                                {KAYFIYATLAR.map((k) => (
+                                                    <button
+                                                        key={k.id}
+                                                        onClick={() => setTanlanganKayfiyat(k)}
+                                                        className={`px-3 py-1.5 rounded-full border text-xs font-medium transition-all duration-200 ${
+                                                            tanlanganKayfiyat.id === k.id 
+                                                                ? `${k.rang} border-amber-500 text-amber-300 shadow-[0_0_10px_rgba(245,158,11,0.15)]` 
+                                                                : 'border-stone-850 text-stone-500 hover:text-stone-300 hover:border-stone-700 bg-stone-950/20'
+                                                        }`}
+                                                    >
+                                                        {k.nom}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <h3 className="text-xs font-bold text-amber-400/90 uppercase tracking-widest mb-3">
+                                                📜 QO'SHIMCHA REJIM
+                                            </h3>
+                                            <div className="flex flex-wrap gap-2">
+                                                {REJIMLAR.map((r) => (
+                                                    <button
+                                                        key={r.id}
+                                                        onClick={() => setTanlanganRejim(r)}
+                                                        className={`px-3 py-1.5 rounded-lg border text-xs transition-all duration-200 ${
+                                                            tanlanganRejim.id === r.id 
+                                                                ? 'border-amber-500 bg-amber-500/10 text-amber-300' 
+                                                                : 'border-stone-850 text-stone-500 hover:text-stone-300 hover:border-stone-700 bg-stone-950/20'
+                                                        }`}
+                                                    >
+                                                        {r.nom}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Trigger Button */}
+                                    <button
+                                        onClick={donishmanddanSora}
+                                        disabled={yuklanmoqda}
+                                        className="w-full py-4 bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-700 rounded-xl text-black font-bold text-sm tracking-widest shadow-[0_4px_25px_rgba(217,119,6,0.3)] hover:scale-[1.01] active:scale-95 transition-all disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-3"
+                                    >
+                                        {yuklanmoqda ? (
+                                            <>
+                                                <span className="w-5 h-5 rounded-full border-2 border-black border-t-transparent animate-spin"></span>
+                                                <span>DONISHMAND JAVOB TAYYORLAMOQDA...</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <span>✨ DONISHMANDDAN JAVOB OLISH</span>
+                                            </>
+                                        )}
+                                    </button>
+
+                                </div>
+
+                                {/* Response Workspace Card (Right side) */}
+                                <div className="lg:col-span-7 space-y-6 flex flex-col justify-between" id="print-area">
+                                    
+                                    <div className="flex-1 min-h-[400px] p-6 md:p-8 rounded-3xl border border-amber-500/20 bg-gradient-to-br from-[#120e24] via-[#090712] to-[#040306] shadow-2xl relative overflow-hidden flex flex-col justify-between">
+                                        
+                                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-600 via-yellow-200 to-amber-600" />
+                                        
+                                        {/* Response Persona Title and Audio */}
+                                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-amber-900/20 pb-4 mb-6 gap-4">
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-3xl filter drop-shadow-[0_0_8px_rgba(245,158,11,0.6)]">
+                                                    {tanlanganPersonaj.belgi}
+                                                </span>
+                                                <div>
+                                                    <h4 className="font-bold text-lg text-amber-400 tracking-wider">
+                                                        {tanlanganPersonaj.nom}
+                                                    </h4>
+                                                    <p className="text-[10px] text-amber-500/60 uppercase tracking-widest flex items-center gap-1.5 font-bold">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                                                        {tanlanganKayfiyat.nom} / {tanlanganRejim.nom}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            
+                                            {/* TTS Panel */}
+                                            {javob && (
+                                                <div className="flex items-center gap-1 bg-stone-950/80 p-1.5 rounded-xl border border-stone-850">
+                                                    <button
+                                                        onClick={() => boshqarOvoz('tinglash')}
+                                                        className={`p-2 rounded-lg hover:bg-stone-900 transition-colors ${ovozOynalmoqda ? 'text-amber-400 animate-pulse bg-amber-500/10' : 'text-stone-400'}`}
+                                                        title="Tinglash"
+                                                    >
+                                                        ▶
+                                                    </button>
+                                                    <button
+                                                        onClick={() => boshqarOvoz('toxtatish')}
+                                                        className="p-2 rounded-lg text-stone-400 hover:text-white hover:bg-stone-900 transition-colors"
+                                                        title="To'xtatish"
+                                                    >
+                                                        ⏸
+                                                    </button>
+                                                    <button
+                                                        onClick={() => boshqarOvoz('ochirish')}
+                                                        className="p-2 rounded-lg text-stone-400 hover:text-red-400 hover:bg-stone-900 transition-colors"
+                                                        title="To'xtatish / Tozalash"
+                                                    >
+                                                        ✕
+                                                    </button>
+                                                    <div className="text-[10px] text-stone-500 px-2 border-l border-stone-850 flex items-center gap-1">
+                                                        <span>Tezlik:</span>
+                                                        <select
+                                                            value={ovozTezligi}
+                                                            onChange={(e) => {
+                                                                setOvozTezligi(Number(e.target.value));
+                                                                boshqarOvoz('ochirish');
+                                                            }}
+                                                            className="bg-transparent text-amber-400 font-bold focus:outline-none cursor-pointer"
+                                                        >
+                                                            <option value={0.8} className="bg-stone-950 text-stone-200">0.8x</option>
+                                                            <option value={1.0} className="bg-stone-950 text-stone-200">1.0x</option>
+                                                            <option value={1.2} className="bg-stone-950 text-stone-200">1.2x</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* AI Response Text Parchment */}
+                                        <div className="flex-1 flex flex-col justify-center my-6">
+                                            {!javob && !yuklanmoqda ? (
+                                                <div className="text-center py-12 space-y-4">
+                                                    <p className="text-stone-500 text-sm italic">
+                                                        Muammongizni yozib, chap tomondan o'zingizga qulay donishmandni tanlang va javob so'rang...
+                                                    </p>
+                                                </div>
+                                            ) : yuklanmoqda ? (
+                                                <div className="space-y-4 py-12 text-center">
+                                                    <div className="flex justify-center gap-1.5">
+                                                        <span className="w-3 h-3 rounded-full bg-amber-500 animate-bounce" />
+                                                        <span className="w-3 h-3 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: '150ms' }} />
+                                                        <span className="w-3 h-3 rounded-full bg-amber-600 animate-bounce" style={{ animationDelay: '300ms' }} />
+                                                    </div>
+                                                    <p className="text-stone-400 text-sm italic tracking-wider">
+                                                        Tarix varaqlari titilmoqda, dono javob tayyorlanmoqda...
+                                                    </p>
+                                                </div>
+                                            ) : (
+                                                <div className="relative p-6 rounded-2xl border border-amber-500/10 bg-amber-950/5">
+                                                    <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-amber-500/20 rounded-tl-lg" />
+                                                    <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-amber-500/20 rounded-br-lg" />
+                                                    <p className="text-lg md:text-xl text-stone-200 font-serif leading-relaxed italic pr-4 whitespace-pre-line">
+                                                        "{jonliMatn}"
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Document Action Triggers */}
+                                        {javob && (
+                                            <div className="border-t border-amber-900/20 pt-6 flex flex-col md:flex-row justify-between items-center gap-4">
+                                                <div className="flex flex-wrap gap-2">
+                                                    <button
+                                                        onClick={nusxaOlish}
+                                                        className="px-4 py-2 bg-stone-900 hover:bg-stone-850 text-stone-300 border border-stone-800 rounded-lg text-xs font-medium flex items-center gap-2 transition-all active:scale-95"
+                                                    >
+                                                        <span>{nusxalandi ? "✓ Nusxalandi!" : "📋 Nusxalash"}</span>
+                                                    </button>
+                                                    <button
+                                                        onClick={yuklahPDF}
+                                                        className="px-4 py-2 bg-stone-900 hover:bg-stone-850 text-stone-300 border border-stone-800 rounded-lg text-xs font-medium flex items-center gap-2 transition-all active:scale-95"
+                                                    >
+                                                        <span>📄 PDF / Chop etish</span>
+                                                    </button>
+                                                    <button
+                                                        onClick={() => {
+                                                            if (navigator.share) {
+                                                                navigator.share({
+                                                                    title: "Donishmand AI Maslahati",
+                                                                    text: javob,
+                                                                    url: window.location.href,
+                                                                }).catch(console.error);
+                                                            } else {
+                                                                nusxaOlish();
+                                                            }
+                                                        }}
+                                                        className="px-4 py-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/20 rounded-lg text-xs font-medium flex items-center gap-2 transition-all active:scale-95"
+                                                    >
+                                                        <span>📤 Ulashish</span>
+                                                    </button>
+                                                </div>
+                                                <div className="flex items-center gap-2 text-[10px] text-stone-500 max-w-xs text-right md:text-left leading-tight">
+                                                    <span>⚠️ Javoblar tarixiy shaxslardan ilhomlangan badiiy va ko'ngilochar maslahatlardir.</span>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                    </div>
+
+                                    {/* Evaluation Metrics Gauges */}
+                                    {javob && (
+                                        <div className="p-6 rounded-2xl border border-amber-900/20 bg-[#100d1f]/40 backdrop-blur-lg shadow-xl">
+                                            <h4 className="text-xs font-bold text-amber-400 mb-6 uppercase tracking-wider flex items-center gap-2">
+                                                <span>🏆</span> HAYOTIY TAVSIYALAR BAHOSI
+                                            </h4>
+                                            <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+                                                {/* Gauge Generator utility */}
+                                                {[
+                                                    { nom: "Jasorat", qiymat: baholar.jasorat, rang: "stroke-amber-500" },
+                                                    { nom: "Intizom", qiymat: baholar.intizom, rang: "stroke-yellow-500" },
+                                                    { nom: "Rivojlanish", qiymat: baholar.rivojlanish, rang: "stroke-emerald-500" },
+                                                    { nom: "Ruhiyat", qiymat: baholar.ruhiyat, rang: "stroke-purple-500" },
+                                                    { nom: "Umid", qiymat: baholar.umid, rang: "stroke-blue-500" }
+                                                ].map((g, idx) => (
+                                                    <div key={idx} className="flex flex-col items-center space-y-2">
+                                                        <div className="relative w-16 h-16 flex items-center justify-center">
+                                                            <svg className="w-full h-full transform -rotate-90">
+                                                                <circle cx="32" cy="32" r="28" stroke="currentColor" className="text-stone-850" strokeWidth="4" fill="transparent" />
+                                                                <circle cx="32" cy="32" r="28" stroke="currentColor" className={`${g.rang} transition-all duration-1000`} strokeWidth="4" fill="transparent"
+                                                                    strokeDasharray={2 * Math.PI * 28}
+                                                                    strokeDashoffset={2 * Math.PI * 28 * (1 - g.qiymat / 100)}
+                                                                />
+                                                            </svg>
+                                                            <span className="absolute text-[11px] font-bold text-white">{g.qiymat}%</span>
+                                                        </div>
+                                                        <span className="text-xs text-stone-400">{g.nom}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                </div>
+
+                            </div>
+                        )}
+
+                    </main>
+
+                    {/* Footer Section */}
+                    <footer className="max-w-7xl mx-auto w-full px-4 py-6 text-center text-xs text-stone-600 border-t border-amber-900/10">
+                        <p>© 2026 Donishmand AI. Barcha huquqlar himoyalangan. Buyuk madaniy merosga hurmat ila.</p>
+                    </footer>
+
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
+```
+eof
+
+```markdown:GitHub Oson Yo'l:github_oson_yol.md
+# 🏛 Donishmand AI - Terminal va Kodlarsiz 2 Daqiqada GitHub-ga Joylash Yo'riqnomasi
+
+Ushbu yo'riqnoma orqali siz birorta ham terminal buyrug'ini yozmasdan, faqatgina kompyuter brauzeri yordamida o'z saytingizni onlayn qilishni o'rganasiz!
+
+---
+
+## 1-Qadam: Faylni Kompyuterga Saqlash
+
+1. Tepadagi `index.html` kod blokining o'ng yuqori burchagidan **Nusxa olish (Copy)** tugmasini bosing.
+2. Kompyuteringiz ishchi stoli (Desktop) da yangi matnli hujjat yarating va unga kodni to'liqligicha joylashtiring.
+3. Hujjat nomini `index.html` deb o'zgartiring va saqlang (Kengaytmasi mutlaqo `.html` bo'lishi shart, `.txt` emas).
+
+---
+
+## 2-Qadam: GitHub-da Repozitoriy Ochish
+
+1. [GitHub.com](https://github.com) saytiga kiring va profilingizga kiring (ro'yxatdan o'tmagan bo'lsangiz, bepul ro'yxatdan o'ting).
+2. Tepadagi **"+"** belgisini bosib, **"New repository"** tugmasini bosing.
+3. Sozlamalarni quyidagicha to'ldiring:
+   - **Repository name:** `donishmand-ai`
+   - **Description:** `Buyuk siymolardan ilhomlangan dono va motivatsion AI maslahatchi.`
+   - **Public** bo'limini tanlang (Hamma saytga kira olishi uchun ochiq qolishi kerak).
+   - Pastdagi **"Create repository"** tugmasini bosing.
+
+---
+
+## 3-Qadam: Faylni Sayt Orqali Yuklash (Drag-and-Drop)
+
+Yangi oyna ochilgandan so'ng, sizga terminal buyruqlari ko'rsatiladi. Lekin bizga ularning keragi yo'q!
+
+1. O'sha sahifadagi o'rta qatorda joylashgan **"uploading an existing file"** (mavjud faylni yuklash) degan havolani bosing.
+2. Ochilgan sahifaga o'z kompyuteringizdagi `index.html` faylini sichqoncha bilan sudrab olib kelib tashlang (**Drag and drop**).
+3. Pastroqdagi yashil rangli **"Commit changes"** (O'zgarishlarni saqlash) tugmasini bosing. Faylingiz GitHub-ga muvaffaqiyatli yuklandi!
+
+---
+
+## 4-Qadam: Saytni Butun Internetga Bepul Jonli Chiqarish (GitHub Pages)
+
+Sizning kodingiz endi internetda, uni butun dunyoga ko'rsatish va link olish uchun:
+
+1. Repozitoriyingiz ichidagi **"Settings"** (Sozlamalar - tishli g'ildirakcha belgisi) bo'limiga o'ting.
+2. Chap tomondagi menyudan **"Pages"** bandini tanlang.
+3. **Build and deployment** bo'limida:
+   - **Branch** degan joyda `None` yozuvini `main` (yoki `master`) ga o'zgartiring.
+   - Yonidagi papka belgisini `/ (root)` holatida qoldiring.
+   - **Save** (Saqlash) tugmasini bosing.
+
+Muvaffaqiyat! Sahifani 1 daqiqadan so'ng yangilasangiz (refresh qilsangiz), tepadagi Pages bo'limida sizga dunyo bo'ylab istalgan odam kira oladigan shaxsiy havolangizni taqdim etadi:
+`https://FOYDALANUVCHI_NOMI.github.io/donishmand-ai/`
+
+---
+
+## 💡 Gemini API Kalitini Olish va Sozlashingiz Uchun:
+1. [Google AI Studio](https://aistudio.google.com/) saytiga bepul Google hisobingiz orqali kiring.
+2. **"Get API key"** tugmasini bosib, yangi Gemini API kalitini oling.
+3. O'zingiz yaratgan jonli saytga kirib, yuqoridagi **⚙️ (Tishli g'ildirakcha)** sozlamalar belgisini bosing va kalitni saqlang. Bo'ldi! Saytingiz to'liq aqlli AIda ishlaydi.
+```
+eof
+
+### Bajarilgan ishlar va qulayliklar:
+1. **Yagona Fayl Standarti (`index.html`):** Butun loyihani faqat bitta HTML fayliga jamladim. Uni ishga tushirish uchun hech qanday terminal buyruqlari (`npm run dev`, `git init` va h.k.) kerak bo'lmaydi.
+2. **API Kalit Xavfsizligi:** API kaliti to'g'ridan-to'g'ri kod ichiga yozilmaydi. Sayt tepasiga **⚙️ Tishli g'ildirakcha** qo'shildi. Foydalanuvchi unga o'zining Gemini kalitini kiritadi va u xavfsiz tarzda brauzerning shaxsiy xotirasida (`localStorage`) qoladi. Bu kalitni boshqalar GitHub orqali ko'rib, o'g'irlay olmaydi.
+3. **GitHub Pages Integratsiyasi:** GitHub-ga faylni drag-and-drop orqali yuklash va uni onlayn link ko'rinishida ishga tushirish qo'llanmasi to'liq tayyorlandi.
+
+Endi kodni ko'chirib, desktopga saqlang va shunchaki GitHub-ga yuklang! Har qanday savollaringiz bo'lsa, bemalol yordam berishga tayyorman.
