@@ -68,7 +68,7 @@
             { matn: "Ruh kasalligi tana kasalligidan og'irroqdir. Sog'lom va osoyishta fikr — har qanday dardingizga shifodir.", muallif: "Ibn Sino" },
             { matn: "Siz qidirayotgan va intilayotgan narsa aynan sizni qidirmoqda. Umidni aslo uzmang, yo'l ochiladi.", muallif: "Jaloliddin Rumiy" },
             { matn: "Inson odobi, ilmi va go'zal xulqi bilan ulug'dir, uning boyligi va kelib chiqishi bilan emas.", muallif: "Al-Xorazmiy" },
-            { matn: "Kelajakni yaxshilik tomonga o'zgartirishni xohlasang, hozirgi daqiqadan unumli foydan.", muallif: "Al-Forobiy" },
+            { matn: "Kelajakni yaxshilik tomonga o'zgartirishni xohlasang, hozirgi daqiqadan unumli foydalan.", muallif: "Al-Forobiy" },
             { matn: "Toleingiz baland bo'lsa, mag'rur ketmang, tushkunlik kelganda esa tiz cho'kmang.", muallif: "Zahiriddin Muhammad Bobur" }
         ];
 
@@ -183,7 +183,7 @@
             const [ovozOynalmoqda, setOvozOynalmoqda] = useState(false);
             const [ovozTezligi, setOvozTezligi] = useState(1.0); 
 
-            // API Settings Modal state
+            // API Sozlamalari oynasi
             const [showSettings, setShowSettings] = useState(false);
             const [tempApiKey, setTempApiKey] = useState('');
             const [apiKey, setApiKey] = useState('');
@@ -192,7 +192,6 @@
                 const randomHikmat = KUN_DONOLIKLARI[Math.floor(Math.random() * KUN_DONOLIKLARI.length)];
                 setKunDonoligi(randomHikmat);
 
-                // Load stored API key
                 const storedKey = localStorage.getItem('donishmand_gemini_api_key') || '';
                 setApiKey(storedKey);
                 setTempApiKey(storedKey);
@@ -264,8 +263,7 @@
                 setJonliMatn('');
 
                 if (!apiKey) {
-                    // API key is missing, notify and use mock simulation
-                    setXatoXabari("Siz Gemini API kalitini kiritmagansiz. Loyiha offlayn simulyatsiya rejimida ishlaydi. To'liq AI uchun tepadagi tishli g'ildirakchani bosing.");
+                    setXatoXabari("Siz Gemini API kalitini kiritmagansiz. Loyiha hozircha oflayn rejimda ishlamoqda. To'liq AI javobini olish uchun tepadagi tishli g'ildirakchani bosing.");
                     setTimeout(() => {
                         simulateFallbackResponse();
                         setYuklanmoqda(false);
@@ -346,7 +344,7 @@ Javobni quyidagi JSON formatida qaytaring, boshqa hech qanday ortiqcha matn, so'
                     }
                 } catch (error) {
                     console.error("API Xatolik:", error);
-                    setXatoXabari("API ulanishida xatolik yuz berdi. Offlayn simulyatsiyadan foydalanildi!");
+                    setXatoXabari("API ulanishida xatolik yuz berdi. Oflayn simulyatsiyadan foydalanildi!");
                     simulateFallbackResponse();
                 } finally {
                     setYuklanmoqda(false);
@@ -362,7 +360,7 @@ Javobni quyidagi JSON formatida qaytaring, boshqa hech qanday ortiqcha matn, so'
                 if (amal === 'tinglash') {
                     window.speechSynthesis.cancel();
                     const speech = new SpeechSynthesisUtterance(javob);
-                    speech.lang = 'tr-TR'; // Good phonetic approximation for Uzbek speech
+                    speech.lang = 'tr-TR'; 
                     speech.rate = ovozTezligi;
                     
                     speech.onend = () => {
@@ -381,7 +379,16 @@ Javobni quyidagi JSON formatida qaytaring, boshqa hech qanday ortiqcha matn, so'
             };
 
             const nusxaOlish = () => {
-                navigator.clipboard.writeText(`🏛 Donishmand AI Maslahati\n\nPersonaj: ${tanlanganPersonaj.nom}\nKayfiyat: ${tanlanganKayfiyat.nom}\n\n"${javob}"\n\n© Donishmand AI platformasi`);
+                document.execCommand('copy');
+                const text = `🏛 Donishmand AI Maslahati\n\nPersonaj: ${tanlanganPersonaj.nom}\nKayfiyat: ${tanlanganKayfiyat.nom}\n\n"${javob}"\n\n© Donishmand AI platformasi`;
+                
+                const dummy = document.createElement("textarea");
+                document.body.appendChild(dummy);
+                dummy.value = text;
+                dummy.select();
+                document.execCommand("copy");
+                document.body.removeChild(dummy);
+
                 setNusxalandi(true);
                 setTimeout(() => setNusxalandi(false), 2000);
             };
@@ -393,12 +400,12 @@ Javobni quyidagi JSON formatida qaytaring, boshqa hech qanday ortiqcha matn, so'
             return (
                 <div className="relative z-20 min-h-screen flex flex-col justify-between">
                     
-                    {/* Background decorations */}
+                    {/* Background bezaklari */}
                     <div className="absolute top-[-15%] left-[-10%] w-[500px] h-[500px] rounded-full bg-purple-900/10 blur-[120px] pointer-events-none -z-10" />
                     <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] rounded-full bg-amber-950/15 blur-[150px] pointer-events-none -z-10" />
                     <DustParticles />
 
-                    {/* Navigation Header */}
+                    {/* Navigatsiya qismi */}
                     <header className="max-w-7xl mx-auto w-full px-4 py-6 flex justify-between items-center border-b border-amber-900/20">
                         <div className="flex items-center gap-3">
                             <span className="text-3xl filter drop-shadow-[0_0_10px_rgba(245,158,11,0.5)]">🏛</span>
@@ -413,7 +420,7 @@ Javobni quyidagi JSON formatida qaytaring, boshqa hech qanday ortiqcha matn, so'
                         </div>
                         
                         <div className="flex items-center gap-3">
-                            {/* API Settings Gear Button */}
+                            {/* API sozlash tishli g'ildirakcha tugmasi */}
                             <button 
                                 onClick={() => setShowSettings(true)}
                                 className="p-2.5 rounded-full bg-stone-900/80 hover:bg-stone-850 border border-stone-800 hover:border-amber-500/30 transition-all text-stone-400 hover:text-amber-400 group"
@@ -427,7 +434,7 @@ Javobni quyidagi JSON formatida qaytaring, boshqa hech qanday ortiqcha matn, so'
                         </div>
                     </header>
 
-                    {/* API Settings Modal */}
+                    {/* API Sozlamalari oynasi (Modal) */}
                     {showSettings && (
                         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-4 animate-fade-in">
                             <div className="w-full max-w-md p-6 rounded-2xl border border-amber-900/30 bg-[#0d0c15] shadow-2xl space-y-4">
@@ -435,7 +442,7 @@ Javobni quyidagi JSON formatida qaytaring, boshqa hech qanday ortiqcha matn, so'
                                     <span>⚙️</span> GEMINI API KALITI SOZLAMALARI
                                 </h3>
                                 <p className="text-xs text-stone-400 leading-relaxed">
-                                    Loyiha Gemini AI yordamida haqiqiy vaqt rejimida javob berishi uchun o'z API kalitingizni kiriting. Kalitingiz maxfiy bo'lib, faqat sizning brauzeringiz xotirasida saqlanadi.
+                                    Loyiha Gemini AI yordamida haqiqiy vaqt rejimida javob berishi uchun o'zingizning bepul API kalitingizni kiriting. Kalit faqat sizning brauzeringiz xotirasida saqlanadi.
                                 </p>
                                 <div className="space-y-2">
                                     <label className="text-[11px] font-bold text-stone-500 uppercase tracking-wider">API Kaliti</label>
@@ -465,7 +472,7 @@ Javobni quyidagi JSON formatida qaytaring, boshqa hech qanday ortiqcha matn, so'
                         </div>
                     )}
 
-                    {/* Global Notification Banner */}
+                    {/* Global ogohlantirish banneri */}
                     {xatoXabari && (
                         <div className="max-w-3xl mx-auto w-full mt-4 px-4">
                             <div className="p-4 bg-amber-950/40 border border-amber-500/20 rounded-xl flex justify-between items-start gap-3 backdrop-blur-md">
@@ -483,14 +490,14 @@ Javobni quyidagi JSON formatida qaytaring, boshqa hech qanday ortiqcha matn, so'
                         </div>
                     )}
 
-                    {/* Main Content Workspace */}
+                    {/* Asosiy ishchi hudud */}
                     <main className="max-w-7xl mx-auto w-full px-4 py-8 flex-1 flex flex-col justify-between">
                         
                         {!boshlangan ? (
                             <div className="flex-1 flex flex-col items-center justify-center text-center max-w-4xl mx-auto my-8 relative">
                                 <div className="absolute inset-0 bg-gradient-to-r from-purple-900/5 to-amber-900/5 rounded-3xl blur-3xl -z-10" />
                                 
-                                {/* Candle Flame Decoration */}
+                                {/* Sham alangasini bezash */}
                                 <div className="mb-8 relative flex flex-col items-center justify-end h-32 w-20">
                                     <div className="w-8 h-20 bg-gradient-to-t from-[#2d1b0d] via-[#a3683a] to-[#d9a05b] rounded-md relative shadow-2xl border-t border-amber-300/30">
                                         <div className="absolute top-2 left-1 w-1.5 h-6 bg-[#d9a05b] rounded-full opacity-80" />
@@ -522,7 +529,7 @@ Javobni quyidagi JSON formatida qaytaring, boshqa hech qanday ortiqcha matn, so'
                                     <span>➔</span>
                                 </button>
 
-                                {/* Day Wisdom banner */}
+                                {/* Kun Hikmati banneri */}
                                 <div className="mt-14 w-full max-w-xl p-6 rounded-2xl border border-amber-900/30 bg-amber-950/10 backdrop-blur-md relative overflow-hidden group hover:border-amber-500/30 transition-all duration-300">
                                     <div className="absolute -top-10 -right-10 w-24 h-24 bg-amber-500/5 rounded-full blur-xl pointer-events-none" />
                                     <div className="flex items-center gap-2 text-amber-400 text-xs tracking-wider uppercase mb-3 font-semibold">
@@ -539,10 +546,10 @@ Javobni quyidagi JSON formatida qaytaring, boshqa hech qanday ortiqcha matn, so'
                         ) : (
                             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 my-4">
                                 
-                                {/* Controls & Form (Left side) */}
+                                {/* Chap Tomon: Sozlamalar va Muammo kiritish */}
                                 <div className="lg:col-span-5 space-y-6">
                                     
-                                    {/* Issue Textarea */}
+                                    {/* Muammo Matn maydoni */}
                                     <div className="p-6 rounded-2xl border border-amber-900/20 bg-[#100d1f]/40 backdrop-blur-lg shadow-xl relative">
                                         <div className="absolute top-4 right-4 flex items-center gap-1.5 px-2 py-1 rounded bg-amber-500/10 border border-amber-500/20 text-[10px] text-amber-400 uppercase font-bold">
                                             <span>🔥 Dono Yondashuv</span>
@@ -558,7 +565,8 @@ Javobni quyidagi JSON formatida qaytaring, boshqa hech qanday ortiqcha matn, so'
                                         />
                                     </div>
 
-                                    {/* Persona Cards Grid */}
+                                    {/* */}
+                                    {/* Personajlar ro'yxati */}
                                     <div className="p-6 rounded-2xl border border-amber-900/20 bg-[#100d1f]/40 backdrop-blur-lg shadow-xl">
                                         <h3 className="text-base font-bold text-amber-400 mb-3 tracking-wide flex items-center gap-2">
                                             <span>🎭</span> DONISHMAND USLUBINI TANLANG
@@ -586,7 +594,7 @@ Javobni quyidagi JSON formatida qaytaring, boshqa hech qanday ortiqcha matn, so'
                                         </div>
                                     </div>
 
-                                    {/* Mood & Modes selection */}
+                                    {/* Kayfiyat va Rejimlar */}
                                     <div className="p-6 rounded-2xl border border-amber-900/20 bg-[#100d1f]/40 backdrop-blur-lg shadow-xl space-y-5">
                                         <div>
                                             <h3 className="text-xs font-bold text-amber-400/90 uppercase tracking-widest mb-3">
@@ -631,7 +639,7 @@ Javobni quyidagi JSON formatida qaytaring, boshqa hech qanday ortiqcha matn, so'
                                         </div>
                                     </div>
 
-                                    {/* Trigger Button */}
+                                    {/* Yuborish Tugmasi */}
                                     <button
                                         onClick={donishmanddanSora}
                                         disabled={yuklanmoqda}
@@ -651,14 +659,15 @@ Javobni quyidagi JSON formatida qaytaring, boshqa hech qanday ortiqcha matn, so'
 
                                 </div>
 
-                                {/* Response Workspace Card (Right side) */}
+                                {/* */}
+                                {/* O'ng Tomon: Javob va Natija ko'rsatish */}
                                 <div className="lg:col-span-7 space-y-6 flex flex-col justify-between" id="print-area">
                                     
                                     <div className="flex-1 min-h-[400px] p-6 md:p-8 rounded-3xl border border-amber-500/20 bg-gradient-to-br from-[#120e24] via-[#090712] to-[#040306] shadow-2xl relative overflow-hidden flex flex-col justify-between">
                                         
                                         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-600 via-yellow-200 to-amber-600" />
                                         
-                                        {/* Response Persona Title and Audio */}
+                                        {/* Tanlangan personaj sarlavhasi va ovoz paneli */}
                                         <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-amber-900/20 pb-4 mb-6 gap-4">
                                             <div className="flex items-center gap-3">
                                                 <span className="text-3xl filter drop-shadow-[0_0_8px_rgba(245,158,11,0.6)]">
@@ -675,7 +684,7 @@ Javobni quyidagi JSON formatida qaytaring, boshqa hech qanday ortiqcha matn, so'
                                                 </div>
                                             </div>
                                             
-                                            {/* TTS Panel */}
+                                            {/* Ovoz berish pulti */}
                                             {javob && (
                                                 <div className="flex items-center gap-1 bg-stone-950/80 p-1.5 rounded-xl border border-stone-850">
                                                     <button
@@ -695,7 +704,7 @@ Javobni quyidagi JSON formatida qaytaring, boshqa hech qanday ortiqcha matn, so'
                                                     <button
                                                         onClick={() => boshqarOvoz('ochirish')}
                                                         className="p-2 rounded-lg text-stone-400 hover:text-red-400 hover:bg-stone-900 transition-colors"
-                                                        title="To'xtatish / Tozalash"
+                                                        title="To'xtatish va O'chirish"
                                                     >
                                                         ✕
                                                     </button>
@@ -718,12 +727,12 @@ Javobni quyidagi JSON formatida qaytaring, boshqa hech qanday ortiqcha matn, so'
                                             )}
                                         </div>
 
-                                        {/* AI Response Text Parchment */}
+                                        {/* Pergament qog'oz uslubidagi AI javobi */}
                                         <div className="flex-1 flex flex-col justify-center my-6">
                                             {!javob && !yuklanmoqda ? (
                                                 <div className="text-center py-12 space-y-4">
                                                     <p className="text-stone-500 text-sm italic">
-                                                        Muammongizni yozib, chap tomondan o'zingizga qulay donishmandni tanlang va javob so'rang...
+                                                        Muammongizni chap tomonga yozing va dono maslahat oling...
                                                     </p>
                                                 </div>
                                             ) : yuklanmoqda ? (
@@ -748,7 +757,7 @@ Javobni quyidagi JSON formatida qaytaring, boshqa hech qanday ortiqcha matn, so'
                                             )}
                                         </div>
 
-                                        {/* Document Action Triggers */}
+                                        {/* Amallar (Nusxalash, Chop etish, Ulashish) */}
                                         {javob && (
                                             <div className="border-t border-amber-900/20 pt-6 flex flex-col md:flex-row justify-between items-center gap-4">
                                                 <div className="flex flex-wrap gap-2">
@@ -759,7 +768,7 @@ Javobni quyidagi JSON formatida qaytaring, boshqa hech qanday ortiqcha matn, so'
                                                         <span>{nusxalandi ? "✓ Nusxalandi!" : "📋 Nusxalash"}</span>
                                                     </button>
                                                     <button
-                                                        onClick={yuklahPDF}
+                                                        onClick={yuklashPDF}
                                                         className="px-4 py-2 bg-stone-900 hover:bg-stone-850 text-stone-300 border border-stone-800 rounded-lg text-xs font-medium flex items-center gap-2 transition-all active:scale-95"
                                                     >
                                                         <span>📄 PDF / Chop etish</span>
@@ -789,14 +798,14 @@ Javobni quyidagi JSON formatida qaytaring, boshqa hech qanday ortiqcha matn, so'
 
                                     </div>
 
-                                    {/* Evaluation Metrics Gauges */}
+                                    {/* */}
+                                    {/* Doiraviy o'lchov datchiklari */}
                                     {javob && (
                                         <div className="p-6 rounded-2xl border border-amber-900/20 bg-[#100d1f]/40 backdrop-blur-lg shadow-xl">
                                             <h4 className="text-xs font-bold text-amber-400 mb-6 uppercase tracking-wider flex items-center gap-2">
                                                 <span>🏆</span> HAYOTIY TAVSIYALAR BAHOSI
                                             </h4>
                                             <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
-                                                {/* Gauge Generator utility */}
                                                 {[
                                                     { nom: "Jasorat", qiymat: baholar.jasorat, rang: "stroke-amber-500" },
                                                     { nom: "Intizom", qiymat: baholar.intizom, rang: "stroke-yellow-500" },
@@ -829,7 +838,7 @@ Javobni quyidagi JSON formatida qaytaring, boshqa hech qanday ortiqcha matn, so'
 
                     </main>
 
-                    {/* Footer Section */}
+                    {/* Footer */}
                     <footer className="max-w-7xl mx-auto w-full px-4 py-6 text-center text-xs text-stone-600 border-t border-amber-900/10">
                         <p>© 2026 Donishmand AI. Barcha huquqlar himoyalangan. Buyuk madaniy merosga hurmat ila.</p>
                     </footer>
@@ -843,72 +852,3 @@ Javobni quyidagi JSON formatida qaytaring, boshqa hech qanday ortiqcha matn, so'
     </script>
 </body>
 </html>
-```
-eof
-
-```markdown:GitHub Oson Yo'l:github_oson_yol.md
-# 🏛 Donishmand AI - Terminal va Kodlarsiz 2 Daqiqada GitHub-ga Joylash Yo'riqnomasi
-
-Ushbu yo'riqnoma orqali siz birorta ham terminal buyrug'ini yozmasdan, faqatgina kompyuter brauzeri yordamida o'z saytingizni onlayn qilishni o'rganasiz!
-
----
-
-## 1-Qadam: Faylni Kompyuterga Saqlash
-
-1. Tepadagi `index.html` kod blokining o'ng yuqori burchagidan **Nusxa olish (Copy)** tugmasini bosing.
-2. Kompyuteringiz ishchi stoli (Desktop) da yangi matnli hujjat yarating va unga kodni to'liqligicha joylashtiring.
-3. Hujjat nomini `index.html` deb o'zgartiring va saqlang (Kengaytmasi mutlaqo `.html` bo'lishi shart, `.txt` emas).
-
----
-
-## 2-Qadam: GitHub-da Repozitoriy Ochish
-
-1. [GitHub.com](https://github.com) saytiga kiring va profilingizga kiring (ro'yxatdan o'tmagan bo'lsangiz, bepul ro'yxatdan o'ting).
-2. Tepadagi **"+"** belgisini bosib, **"New repository"** tugmasini bosing.
-3. Sozlamalarni quyidagicha to'ldiring:
-   - **Repository name:** `donishmand-ai`
-   - **Description:** `Buyuk siymolardan ilhomlangan dono va motivatsion AI maslahatchi.`
-   - **Public** bo'limini tanlang (Hamma saytga kira olishi uchun ochiq qolishi kerak).
-   - Pastdagi **"Create repository"** tugmasini bosing.
-
----
-
-## 3-Qadam: Faylni Sayt Orqali Yuklash (Drag-and-Drop)
-
-Yangi oyna ochilgandan so'ng, sizga terminal buyruqlari ko'rsatiladi. Lekin bizga ularning keragi yo'q!
-
-1. O'sha sahifadagi o'rta qatorda joylashgan **"uploading an existing file"** (mavjud faylni yuklash) degan havolani bosing.
-2. Ochilgan sahifaga o'z kompyuteringizdagi `index.html` faylini sichqoncha bilan sudrab olib kelib tashlang (**Drag and drop**).
-3. Pastroqdagi yashil rangli **"Commit changes"** (O'zgarishlarni saqlash) tugmasini bosing. Faylingiz GitHub-ga muvaffaqiyatli yuklandi!
-
----
-
-## 4-Qadam: Saytni Butun Internetga Bepul Jonli Chiqarish (GitHub Pages)
-
-Sizning kodingiz endi internetda, uni butun dunyoga ko'rsatish va link olish uchun:
-
-1. Repozitoriyingiz ichidagi **"Settings"** (Sozlamalar - tishli g'ildirakcha belgisi) bo'limiga o'ting.
-2. Chap tomondagi menyudan **"Pages"** bandini tanlang.
-3. **Build and deployment** bo'limida:
-   - **Branch** degan joyda `None` yozuvini `main` (yoki `master`) ga o'zgartiring.
-   - Yonidagi papka belgisini `/ (root)` holatida qoldiring.
-   - **Save** (Saqlash) tugmasini bosing.
-
-Muvaffaqiyat! Sahifani 1 daqiqadan so'ng yangilasangiz (refresh qilsangiz), tepadagi Pages bo'limida sizga dunyo bo'ylab istalgan odam kira oladigan shaxsiy havolangizni taqdim etadi:
-`https://FOYDALANUVCHI_NOMI.github.io/donishmand-ai/`
-
----
-
-## 💡 Gemini API Kalitini Olish va Sozlashingiz Uchun:
-1. [Google AI Studio](https://aistudio.google.com/) saytiga bepul Google hisobingiz orqali kiring.
-2. **"Get API key"** tugmasini bosib, yangi Gemini API kalitini oling.
-3. O'zingiz yaratgan jonli saytga kirib, yuqoridagi **⚙️ (Tishli g'ildirakcha)** sozlamalar belgisini bosing va kalitni saqlang. Bo'ldi! Saytingiz to'liq aqlli AIda ishlaydi.
-```
-eof
-
-### Bajarilgan ishlar va qulayliklar:
-1. **Yagona Fayl Standarti (`index.html`):** Butun loyihani faqat bitta HTML fayliga jamladim. Uni ishga tushirish uchun hech qanday terminal buyruqlari (`npm run dev`, `git init` va h.k.) kerak bo'lmaydi.
-2. **API Kalit Xavfsizligi:** API kaliti to'g'ridan-to'g'ri kod ichiga yozilmaydi. Sayt tepasiga **⚙️ Tishli g'ildirakcha** qo'shildi. Foydalanuvchi unga o'zining Gemini kalitini kiritadi va u xavfsiz tarzda brauzerning shaxsiy xotirasida (`localStorage`) qoladi. Bu kalitni boshqalar GitHub orqali ko'rib, o'g'irlay olmaydi.
-3. **GitHub Pages Integratsiyasi:** GitHub-ga faylni drag-and-drop orqali yuklash va uni onlayn link ko'rinishida ishga tushirish qo'llanmasi to'liq tayyorlandi.
-
-Endi kodni ko'chirib, desktopga saqlang va shunchaki GitHub-ga yuklang! Har qanday savollaringiz bo'lsa, bemalol yordam berishga tayyorman.
